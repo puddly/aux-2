@@ -157,42 +157,22 @@ bluetooth_proxy:
 esp32_ble_tracker:
   id: proxy_ble_tracker
 
-##### Z-Wave Proxy
-mdns:
-  services:
-    - service: "_zwave"
-      protocol: "_tcp"
-      port: 6053
-      txt:
-        protocol: "esphome"
-
+##### USB Serial Proxy
+# Devices plugged into the USB port are bound to the serial proxy slots below by
+# VID:PID, first matching rule wins
 usb_host:
+  id: usb_host_component
   enable_hubs: true
-
-usb_uart:
-  - type: CDC_ACM
-    vid: 0x303A
-    pid: 0x4001
-    # Don't claim the unused CDC notification interface — frees one of the
-    # ESP32-S3's eight USB host channels so hub + ZWA-2 + CH343 fit (8/8).
-    claim_comm_interface: false
-    channels:
-      - id: uch_zw
-        baud_rate: 115200
-        buffer_size: 1024
-  # Stock WCH CH343 id — matches any CH343-based adapter, not one product;
-  # the validated/supported unit is the Waveshare USB-to-RS-485 dongle
-  - type: CH34X
-    vid: 0x1A86
-    pid: 0x55D3
-    channels:
-      - id: uch_usb_serial
-        baud_rate: 9600
-        buffer_size: 1024
-
-zwave_proxy:
-  id: zw_proxy
-  uart_id: uch_zw
+  drivers:
+    # Home Assistant Connect ZBT-2
+    - type: CDC_ACM
+      vid: 0x303A
+      pid: 0x4001
+    # Home Assistant Connect ZBT-1. Stock Silicon Labs CP2102N id, so this matches
+    # any CP210x-based adapter
+    - type: CP210X
+      vid: 0x10C4
+      pid: 0xEA60
 
 ##### UARTs & Serial Proxies
 uart:
@@ -215,9 +195,9 @@ serial_proxy:
     name: RS-232 Port 2
     port_type: RS232
   - id: usb_serial_proxy
-    uart_id: uch_usb_serial
+    usb_host_id: usb_host_component
     name: USB Serial Port
-    port_type: RS485
+    buffer_size: 1024
 
 ##### I2C Components
 i2c:
